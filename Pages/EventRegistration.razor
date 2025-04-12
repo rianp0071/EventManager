@@ -1,0 +1,56 @@
+@page "/eventregistration"
+@inject NavigationManager NavManager
+@using EventManagerApp.Services
+
+@code {
+    private string? eventName;
+    private DateTime? eventDate;
+    private string? eventLocation;
+
+    [Inject]
+    public IEventService? EventService { get; set; }
+
+    private void SubmitEvent()
+    {
+        // Logic to save the event
+        if (!string.IsNullOrWhiteSpace(eventName) && eventDate.HasValue && !string.IsNullOrWhiteSpace(eventLocation))
+        {
+            EventService?.AddEvent(new Event
+            {
+                Id = EventService.GetNextId(), // Assuming GetNextId() generates a new unique ID
+                Name = eventName.Trim(),
+                DateTime = eventDate.Value,
+                Location = eventLocation.Trim()
+            });
+
+            // Clear the input fields after submission
+            eventName = string.Empty;
+            eventDate = null;
+            eventLocation = string.Empty;
+
+            Console.WriteLine("Event added successfully!");
+        }
+        else
+        {
+            // Handle the case where the input is invalid
+            Console.WriteLine("Event name, date, and location cannot be empty.");
+            return;
+        }
+
+        NavManager.NavigateTo("/eventmanager");
+    }
+}
+
+<h3>Add Event</h3>
+<form>
+    <input @bind="eventName" placeholder="Event Name" class="@((string.IsNullOrWhiteSpace(eventName) ? "input-error" : ""))" />
+    <span class="validation-message">@((string.IsNullOrWhiteSpace(eventName) ? "Event Name is required." : ""))</span>
+    <br />
+    <input type="date" @bind="eventDate" class="@((!eventDate.HasValue ? "input-error" : ""))" />
+    <span class="validation-message">@((!eventDate.HasValue ? "Event Date is required." : ""))</span>
+    <br />
+    <input @bind="eventLocation" placeholder="Event Location" class="@((string.IsNullOrWhiteSpace(eventLocation) ? "input-error" : ""))" />
+    <span class="validation-message">@((string.IsNullOrWhiteSpace(eventLocation) ? "Event Location is required." : ""))</span>
+    <br />
+    <button @onclick="SubmitEvent" disabled="@(string.IsNullOrWhiteSpace(eventName) || !eventDate.HasValue || string.IsNullOrWhiteSpace(eventLocation))">Submit</button>
+</form>

@@ -1,0 +1,53 @@
+﻿@page "/eventmanager"
+@using EventManagerApp.Services
+
+<PageTitle>Event Manager</PageTitle>
+
+<h3>Event List</h3>
+@if (events == null || events.Count == 0)
+{
+    <p>No events available. Please add some events.</p>
+}
+else
+{
+    <p>Here are the available events:</p>
+    <ul>
+        @foreach (var currentEvent in events)
+        {
+            <li>
+                <strong>@currentEvent.Name</strong> - @currentEvent.DateTime.ToString("f")<br />
+                Location: @currentEvent.Location
+                <br />
+                <NavLink href="@($"/event/{currentEvent.Id}")" Match="NavLinkMatch.Prefix">View Details</NavLink>
+                <br />
+                <button @onclick="() => RemoveEvent(currentEvent.Id)">Remove</button>
+            </li>
+        }
+    </ul>
+}
+
+<NavLink href="/eventregistration">Event Registration</NavLink>
+
+@code {
+    [Inject]
+    public IEventService? EventService {get; set;} // Initialize the service directly for simplicity
+    private List<Event>? events;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EventService != null)
+        {
+            events = EventService != null ? await EventService.GetEventsAsync() ?? new List<Event>() : new List<Event>();
+        }
+    }
+
+    private async Task RemoveEvent(int eventId)
+    {
+        if (EventService != null)
+        {
+            EventService.deleteEvent(eventId);
+            events = EventService != null ? await EventService.GetEventsAsync() ?? new List<Event>() : new List<Event>();
+        }
+    }
+}
+

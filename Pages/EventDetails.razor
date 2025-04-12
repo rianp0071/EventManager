@@ -1,0 +1,109 @@
+@page "/event/{EventId}"
+@using EventManagerApp.Services
+@inject NavigationManager NavManager
+
+@if ( currentEvent == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table> 
+        <tr>
+            <th>Name</th>
+            <td>@currentEvent.Name</td>
+        </tr>
+        <tr>
+            <th>Date</th>
+            <td>@currentEvent.DateTime</td>
+        </tr>
+        <tr>
+            <th>Location</th>
+            <td>@currentEvent.Location</td>
+        </tr>
+    </table>
+<br/>
+
+<NavLink href="@($"/event/{EventId}/attendeeregistration")" Match="NavLinkMatch.Prefix">RegisterAttendees</NavLink>
+
+<h2>Attendees</h2>
+@if (currentEvent.Attendees != null && currentEvent.Attendees.Count > 0)
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Registration Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var attendee in currentEvent.Attendees.Values)
+            {
+                <tr>
+                    <td>@attendee.Name</td>
+                    <td>@attendee.Email</td>
+                    <td>@attendee.RegistrationDate</td>
+                </tr>
+                <td>
+                    <button @onclick="() => DeleteAttendee(attendee.Id)">Delete</button>
+                </td>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No attendees found.</p>
+}
+
+
+    <button @onclick="NavigateAToEventManager">Back to Event Manager</button>
+}
+
+
+@code {
+    [Inject]
+    public IEventService? EventService { get; set; }
+
+    [Parameter]
+    public string? EventId { get; set; }
+
+    private Event? currentEvent;
+
+    protected override async Task OnInitializedAsync()
+    {  
+        if (EventService != null)
+        {
+            if (int.TryParse(EventId, out var eventId))
+            {
+                try 
+                {
+                    currentEvent = await EventService.GetEventByIdAsync(eventId);
+                    StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error fetching event: {ex.Message}");
+                }
+            }
+        }
+    }
+
+    private void NavigateAToEventManager()
+    {
+        NavManager.NavigateTo("/eventmanager");
+    }
+
+    private void DeleteAttendee(int attendeeId)
+    {
+        if (EventService != null && currentEvent != null)
+        {
+            EventService.DeleteAttendee(currentEvent.Id, attendeeId);
+            currentEvent.Attendees?.Remove(attendeeId);
+            StateHasChanged();
+        }
+    }    
+}
+
+    
